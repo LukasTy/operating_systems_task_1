@@ -74,24 +74,6 @@ void initiliazeMemory()
 	}
 }
 /**
- * Loads the program file contents into the supervisor memory 
- * return:
- *		int -1 - if the program fails to load program into memory
- *		int 0  - if the program loading completed without errors 
- */
-/*int loadProgramIntoSupervisorMemory()
-{
-	for (i = 0; i < programLength; ++i)
-	{
-		for (j = 0; j < MEMORY_ARRAY_WIDTH; ++j)
-	   		{
-		    	rmSupervisorMemory[i][j] = programFileContents[i][j];
-	   		}
-  	}
-  	return 0;
-}*/
-
-/**
  * Loads the program from supervisor memory into the real memory using PLR 
  * to choose the right memory block
  * return:
@@ -136,15 +118,6 @@ int loadProgramIntoMemory()
 		  	if (lineCount <= 9)
 			{
 				//printf("%d  %d", lineCount, blockNumber);
-				if (lineCount < 10 && rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == '0' && programBeginingWritten == 0)
-		   		{
-		   			blockNumber = findRealBlockByPLR(nextPLRBlockIndex++);
-		   			if (blockNumber == -1){
-						return -1;
-					}
-		   			lineCount = 0;
-		   			programBeginingWritten = 1;
-		   		}
 		   		for (j = 0; j < MEMORY_ARRAY_WIDTH; ++j)
 		   		{
 			    	rmMemory[lineCount + blockNumber * 10][j] = rmSupervisorMemory[i][j];
@@ -331,7 +304,6 @@ void showRegistryStatus()
 	printf("IC: %d\n", vm_IC);
 	printf("PLR: %d%d%d%d\n", PLR[0], PLR[1], PLR[2], PLR[3]);
 }
-
 /**
  * Marks all words within the provided block with "-" and sets the block status tu used = true;
  */
