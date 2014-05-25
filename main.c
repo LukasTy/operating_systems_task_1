@@ -413,7 +413,7 @@ void detectCommand()
 	char command[4];
 	int programNameEnd = 0;
 
-	while ( (command[0] != '$' || command[1] != 'E' || command[2] != 'N' || command[3] != 'D') )
+	while ( (command[0] != 'H' || command[1] != 'A' || command[2] != 'L' || command[3] != 'T') )
 	{
 		for (i = 0; i < MEMORY_ARRAY_WIDTH; ++i)
 		{
@@ -433,7 +433,7 @@ void detectCommand()
 
 			switch(command[0])
 			{
-				case '$':
+/*				case '$':
 					if (command[1] == 'B' && command[2] == 'E' && command[3] == 'G')
 					{
 						// move to next line
@@ -453,7 +453,7 @@ void detectCommand()
 					{
 						printf("Unknown symbol within program. Stopping!\n");
 					}
-					break;
+					break;*/
 				case 'P':
 					if (command[1] == 'D' && isdigit(command[2]) && isdigit(command[3]))
 					{
@@ -532,24 +532,8 @@ void detectCommand()
 						printf("Program name part detected.\n");
 					}
 					break;
-				case 'H':
-					if (command[1] == 'A' && command[2] == 'L' && command[3] == 'T')
-					{
-						printf("HALT command detected\n");
-					}
-					break;
 				default:
-					if (isdigit(command[0]) && isdigit(command[1]) && isdigit(command[2]) && isdigit(command[3]))
-					{
-						// TODO: set the limit of output rows
-						printf("Set the limit of output rows detected.\n");
-					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
-					{
-						// TODO: deal with program name
-						printf("Program name part detected.\n");
-					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 1)
+					if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 1)
 					{
 						printf("Output string detected.\n");
 					}
@@ -672,7 +656,7 @@ int main()
 	}
 	printf("===END===\n");
 	showRegistryStatus();
-	//detectCommand();
+	detectCommand();
 	
 	if (outputRealMachineMemoryToFile(OUTPUT_FILE_NAME) == 0)
 	{
