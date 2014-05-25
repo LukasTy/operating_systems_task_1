@@ -30,15 +30,15 @@ int programLength;
 
 // VM registries
 char vm_R [4];
-int  vm_IC;
-bool vm_C;
+int  vm_IC = 0;
+bool vm_C = false;
 
 // RM registries
 char rm_R [4] = {0};
-int  rm_IC;
+int  rm_IC = 0;
 int  PLR  [4];
 int  CHST1, CHST2, CHST3;
-bool rm_C;
+bool rm_C = false;
 char MODE;
 
 
@@ -112,16 +112,16 @@ int loadProgramIntoMemory()
 	{
 		if (rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == 'B' && rmSupervisorMemory[i][2] == 'E' && rmSupervisorMemory[i][3] == 'G')
 		{
-			++i;
+			printf("$BEG detected!\n");
 		}
 		else if(rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == 'E' && rmSupervisorMemory[i][2] == 'N' && rmSupervisorMemory[i][3] == 'D')
 		{
 			return 0;
 		}
-/*		else if()
+		else if(isdigit(rmSupervisorMemory[i][0]) && isdigit(rmSupervisorMemory[i][1]) && isdigit(rmSupervisorMemory[i][2]) && isdigit(rmSupervisorMemory[i][3]))
 		{
-
-		}*/
+			printf("Set max output line count detected!\n");
+		}
 		else
 		{
 		  	if (lineCount <= 9)
@@ -154,7 +154,7 @@ int loadProgramIntoMemory()
 	  		}
   		}
   	}
-  	return 0;
+  	return -1;
 }
 /**
  * Return the real block for the provided virtual machine block index
