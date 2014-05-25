@@ -26,7 +26,9 @@ char rmMemory[RM_MEMORY_ARRAY_LENGTH][MEMORY_ARRAY_WIDTH];
 // block array (block = 10 words = 10 memory blocks)
 bool memoryBlocksUsed[RM_MEMORY_ARRAY_LENGTH/10] = {false};
 // used to store the length of the program
-int programLength;
+int programLength = 0;
+// determines the maximum amount of lines program can output
+int maxOutputLines = 0;
 
 // VM registries
 char vm_R [4];
@@ -76,6 +78,7 @@ void initiliazeMemory()
 /**
  * Loads the program from supervisor memory into the real memory using PLR 
  * to choose the right memory block
+ * Loads only the needed blocks, program name, begin and end symbols are dropped 
  * return:
  *		int -1 - if the program fails to load program into memory
  *		int 0  - if the program loading completed without errors 
@@ -106,11 +109,12 @@ int loadProgramIntoMemory()
 		else if(isdigit(rmSupervisorMemory[i][0]) && isdigit(rmSupervisorMemory[i][1]) && isdigit(rmSupervisorMemory[i][2]) && isdigit(rmSupervisorMemory[i][3]) && rmSupervisorMemory[i][2] > 0)
 		{
 			printf("Set max output line count detected!\n");
+			maxOutputLines = (rmSupervisorMemory[i][0] - '0') * 1000 + (rmSupervisorMemory[i][1] - '0') * 100 + (rmSupervisorMemory[i][2] - '0') * 10 + (rmSupervisorMemory[i][3] - '0');
 		}
 		// if all four members within array were NOT numbers - letters
 		else if(!isdigit(rmSupervisorMemory[i][0]) && !isdigit(rmSupervisorMemory[i][1]) && !isdigit(rmSupervisorMemory[i][2]) && !isdigit(rmSupervisorMemory[i][3]) && programBeginingWritten == 0)
 		{
-			printf("Text line detected!\n");
+			printf("Program name part detected!\n");
 		}
 		// if $0x0 block detected, meaning - go to x block and put upcoming data there
 		else if(rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == '0' && isdigit(rmSupervisorMemory[i][2]) && rmSupervisorMemory[i][3] == '0' && rmSupervisorMemory[i][2] > 0)
@@ -433,27 +437,6 @@ void detectCommand()
 
 			switch(command[0])
 			{
-/*				case '$':
-					if (command[1] == 'B' && command[2] == 'E' && command[3] == 'G')
-					{
-						// move to next line
-						printf("$BEG detected.\n");
-					}
-					else if (command[1] == '0' && command[3] == '0')
-					{
-						// put data to a different block told by command[2]
-						printf("Move to another block ($0x0) detected. X is equal to %c\n", command[2]);
-						programNameEnd = 1;
-					}
-					else if (command[1] == 'E' && command[2] =='N' && command[3] == 'D')
-					{
-						printf("Program ending!\n");
-					}
-					else
-					{
-						printf("Unknown symbol within program. Stopping!\n");
-					}
-					break;*/
 				case 'P':
 					if (command[1] == 'D' && isdigit(command[2]) && isdigit(command[3]))
 					{
@@ -538,10 +521,11 @@ void detectCommand()
 						printf("Output string detected.\n");
 					}
 					break;
-		}
-		}
-	} 
-}
+			}// end switch
+		}// end else
+	}// end while 
+	printf("Program work done. HALT detected!\n");
+}// end detectCommand()
 /*----------------------------------------------------------------------------------------------------*/
 
 void commandAD(char x1, char x2)
