@@ -118,9 +118,13 @@ int loadProgramIntoMemory()
 		{
 			return 0;
 		}
-		else if(isdigit(rmSupervisorMemory[i][0]) && isdigit(rmSupervisorMemory[i][1]) && isdigit(rmSupervisorMemory[i][2]) && isdigit(rmSupervisorMemory[i][3]))
+		else if(isdigit(rmSupervisorMemory[i][0]) && isdigit(rmSupervisorMemory[i][1]) && isdigit(rmSupervisorMemory[i][2]) && isdigit(rmSupervisorMemory[i][3]) && rmSupervisorMemory[i][2] > 0)
 		{
 			printf("Set max output line count detected!\n");
+		}
+		else if(!isdigit(rmSupervisorMemory[i][0]) && !isdigit(rmSupervisorMemory[i][1]) && !isdigit(rmSupervisorMemory[i][2]) && !isdigit(rmSupervisorMemory[i][3]))
+		{
+			printf("Text line detected!\n");
 		}
 		else
 		{
@@ -670,7 +674,7 @@ int main()
 	{
 		printf("\nThere was a problem loading program into supervisor memory!\n");
 	}
-	
+	printf("===Program parsing info===\n");
 	if (loadProgramIntoMemory() == 0)
 	{
 		printf("\nProgram file loading into real memory was successful!\n");
@@ -679,6 +683,7 @@ int main()
 	{
 		printf("\nThere was a problem loading program into real memory!\n");
 	}
+	printf("===END===\n");
 	showRegistryStatus();
 	//detectCommand();
 	
