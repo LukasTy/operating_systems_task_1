@@ -20,11 +20,9 @@ int asking = 1;
 int i, j = 0, k = 0;
 
 // array for supervisor memory
-char rmSupervisorMemory[RM_MEMORY_ARRAY_LENGTH/2][MEMORY_ARRAY_WIDTH];
+char rmSupervisorMemory[FILE_FORMAT_MAX_LENGTH][MEMORY_ARRAY_WIDTH];
 // array for real machine operating memory
 char rmMemory[RM_MEMORY_ARRAY_LENGTH][MEMORY_ARRAY_WIDTH];
-// array for program file contents to be stored
-char programFileContents[FILE_FORMAT_MAX_LENGTH][MEMORY_ARRAY_WIDTH];
 // block array (block = 10 words = 10 memory blocks)
 bool memoryBlocksUsed[RM_MEMORY_ARRAY_LENGTH/10] = {false};
 // used to store the length of the program
@@ -51,7 +49,7 @@ int TI;
 int IOI;
 
 /**
- * Initializes memory array , supervisor array and R registries with 0 characters
+ * Initializes memory array, supervisor array and R registries with 0 characters
  */
 void initiliazeMemory()
 {
@@ -81,7 +79,7 @@ void initiliazeMemory()
  *		int -1 - if the program fails to load program into memory
  *		int 0  - if the program loading completed without errors 
  */
-int loadProgramIntoSupervisorMemory()
+/*int loadProgramIntoSupervisorMemory()
 {
 	for (i = 0; i < programLength; ++i)
 	{
@@ -91,7 +89,7 @@ int loadProgramIntoSupervisorMemory()
 	   		}
   	}
   	return 0;
-}
+}*/
 
 /**
  * Loads the program from supervisor memory into the real memory using PLR 
@@ -205,7 +203,7 @@ int getRandomFreeBlock()
 			chosing = 0;
 		}
 		//printf("%d  ", randomNumber);
-		if (timesTried >= 200)
+		if (timesTried >= RM_MEMORY_ARRAY_LENGTH)
 		{
 			return -1;
 		}
@@ -244,7 +242,7 @@ int outputRealMachineMemoryToFile(char* fileName)
 	return 0;
 }
 /**
- * read the provided program file contents into temporary array
+ * read the provided program file contents into supervisor memory
  * return:
  *		int  0 - if the reading was successful 
  *		and the program begins with "$BEG" and ends with "$END"
@@ -283,27 +281,27 @@ int readProgramFile()
 			buffer = fgetc(programFile);
 			// put that one symbol of code inside the array
 			//if (buffer != '\n')
-			programFileContents[j][i] = buffer;
+			rmSupervisorMemory[j][i] = buffer;
 		}
 		++j;
 		// print the array contents char by char
 		for (i = 0; i <= MEMORY_ARRAY_WIDTH; ++i)
 		{
-			printf("%c", programFileContents[k][i]);
+			printf("%c", rmSupervisorMemory[k][i]);
 		}
 		++k;
 	}
 	fclose(programFile);
 	programLength = k;
 	
-	if (programFileContents  [0][0] == '$' && 
-		programFileContents  [0][1] == 'B' &&
-		programFileContents  [0][2] == 'E' &&
-		programFileContents  [0][3] == 'G' &&
-		programFileContents[k-1][0] == '$' &&
-		programFileContents[k-1][1] == 'E' &&
-		programFileContents[k-1][2] == 'N' &&
-		programFileContents[k-1][3] == 'D'
+	if (rmSupervisorMemory  [0][0] == '$' && 
+		rmSupervisorMemory  [0][1] == 'B' &&
+		rmSupervisorMemory  [0][2] == 'E' &&
+		rmSupervisorMemory  [0][3] == 'G' &&
+		rmSupervisorMemory[k-1][0] == '$' &&
+		rmSupervisorMemory[k-1][1] == 'E' &&
+		rmSupervisorMemory[k-1][2] == 'N' &&
+		rmSupervisorMemory[k-1][3] == 'D'
 		)
 	{
 		return 0;
@@ -353,7 +351,7 @@ int initPLR()
     int blockNum = getRandomFreeBlock();
     if(blockNum == -1)
     {
-        printf("FATAL ERROR: there no space for paging table.");
+        printf("FATAL ERROR: there is no space for paging table.");
         return  -1;
     }
     else
@@ -651,105 +649,7 @@ void commandHALT()
 {
 	printf("HALT command executed. Virtual Machine work stopped!\n");
 }
-
-/*int detectCommand()
-{
-    int kmd[4];
-    do
-	{
-       showRegistryStatus();
-        for(i = 0; i < 4; ++i)
-		{
-          kmd[i] = rmMemory[findRealAddress(vm_IC / 10, vm_IC % 10)][i];
-        }
-        printf("Komanda: %d%d%d%d\n", kmd[0], kmd[1], kmd[2], kmd[3]);
-    
-        getchar();
-        ++vm_IC;
-        switch(kmd[0])
-        {
-          case 'L' :
-            if (kmd[1] == 'R')
-            {
-            	commandLR(kmd[2], kmd[3]);
-            }
-            else 
-            {
-              printf("Unknown command. Program flushed.\n");
-              kmd[0]='H';
-            }
-            break;
-          case 'S' :
-            if (kmd[1] == 'R')
-            {
-            	commandSR(kmd[2], kmd[3]);
-            }
-            else 
-            {
-              printf("Unknown command. Program flushed.\n");
-              kmd[0] = 'H';
-            }
-            break;
-            case 'C' :
-            if (kmd[1] == 'R')
-            {
-            	commandCR(kmd[2], kmd[3]);
-            }
-            else 
-            {
-              printf("Unknown command. Program flushed.\n");
-              kmd[0] = 'H';
-            }
-            break;
-          case 'B' :
-            if (kmd[1] == 'T')
-            {
-            	commandBT(kmd[2], kmd[3]);
-            }
-            else 
-            {
-              printf("Unknown command. Program flushed.\n");
-              kmd[0] = 'H';
-            }
-            break;
-          case 'G' :
-            if (kmd[1] == 'D')
-            {
-            	commandGD(kmd[2]);
-            }
-            else 
-            {
-              printf("Unknown command. Program flushed.\n");
-              kmd[0]='H';
-            }
-            break;
-          case 'P' :
-            if (kmd[1] == 'D')
-            {
-            	commandPD(kmd[2]);
-            }
-            else 
-            {
-              printf("Unknown command. Program flushed.");
-              kmd[0]='H';
-            }
-            break;
-          case 'A' :
-            if (kmd[1] == 'D')
-            {
-            	commandAD(kmd[2], kmd[3]);
-            }
-            else 
-            {
-              printf("Unknown command. Program flushed.");
-              kmd[0]='H';
-            }
-        }
-    } 
-    while (kmd[0] != 'H');
-    commandHALT();
-}*/
-
+/*------------------------------MAIN PROGRAM--------------------------------------*/
 int main()
 {	
 	printf("/***************************************************************/\n");
@@ -757,19 +657,12 @@ int main()
 	printf("* This is a program which simulates VM work on top of RM.\n");
 	printf("/***************************************************************/\n");
 	
+	printf("System Information:\n");
+
 	initiliazeMemory();
 	initializePageTable();
 	
 	if (readProgramFile() == 0)
-	{
-		printf("\nProgram file reading into temporary memory was successful!\n");
-	}
-	else
-	{
-		printf("\nThere was a problem reading program file into temporary memory!\n");
-	}
-	printf("System Information:\n");
-	if (loadProgramIntoSupervisorMemory() == 0)
 	{
 		printf("\nProgram file loading into supervisor memory was successful!\n");
 	}
@@ -777,6 +670,7 @@ int main()
 	{
 		printf("\nThere was a problem loading program into supervisor memory!\n");
 	}
+	
 	if (loadProgramIntoMemory() == 0)
 	{
 		printf("\nProgram file loading into real memory was successful!\n");
