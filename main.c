@@ -10,7 +10,7 @@
 #include <stdbool.h>
 #include <time.h>
 
-#define RM_MEMORY_ARRAY_LENGTH 150
+#define RM_MEMORY_ARRAY_LENGTH 300
 #define MEMORY_ARRAY_WIDTH 4
 #define FILE_FORMAT_MAX_LENGTH 100
 #define OUTPUT_FILE_NAME "memory_status.txt"
@@ -19,6 +19,8 @@ int running = 0;
 int asking = 1;
 int i, j = 0, k = 0;
 
+// array for supervisor memory
+char rmSupervisorMemory[RM_MEMORY_ARRAY_LENGTH/2][MEMORY_ARRAY_WIDTH];
 // array for real machine operating memory
 char rmMemory[RM_MEMORY_ARRAY_LENGTH][MEMORY_ARRAY_WIDTH];
 // array for program file contents to be stored
@@ -49,7 +51,7 @@ int TI;
 int IOI;
 
 /**
- * Initializes memory array and R registries with 0 characters
+ * Initializes memory array , supervisor array and R registries with 0 characters
  */
 void initiliazeMemory()
 {
@@ -60,6 +62,13 @@ void initiliazeMemory()
 			rmMemory[i][j] = '0';
 		}
 	}
+	for (i = 0; i < RM_MEMORY_ARRAY_LENGTH/2; ++i)
+	{
+		for (j = 0; j < MEMORY_ARRAY_WIDTH; ++j)
+		{
+			rmSupervisorMemory[i][j] = '0';
+		}
+	}
 	for (i = 0; i < MEMORY_ARRAY_WIDTH; ++i)
 	{
 		rm_R[i] = '0';
@@ -67,10 +76,29 @@ void initiliazeMemory()
 	}
 }
 /**
- * Loads the program file contents into the real memory using PLR to chose the right memory block
+ * Loads the program file contents into the supervisor memory 
  * return:
  *		int -1 - if the program fails to load program into memory
- *		int 0  - if the program completed without errors 
+ *		int 0  - if the program loading completed without errors 
+ */
+int loadProgramIntoSupervisorMemory()
+{
+	for (i = 0; i < programLength; ++i)
+	{
+		for (j = 0; j < MEMORY_ARRAY_WIDTH; ++j)
+	   		{
+		    	rmSupervisorMemory[i][j] = programFileContents[i][j];
+	   		}
+  	}
+  	return 0;
+}
+
+/**
+ * Loads the program from supervisor memory into the real memory using PLR 
+ * to choose the right memory block
+ * return:
+ *		int -1 - if the program fails to load program into memory
+ *		int 0  - if the program loading completed without errors 
  */
 int loadProgramIntoMemory()
 {
@@ -84,33 +112,48 @@ int loadProgramIntoMemory()
 
 	for (i = 0; i < programLength; ++i)
 	{
-	  	if (lineCount <= 9)
+		if (rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == 'B' && rmSupervisorMemory[i][2] == 'E' && rmSupervisorMemory[i][3] == 'G')
 		{
-			//printf("%d  %d", lineCount, blockNumber);
-			if (lineCount < 10 && programFileContents[i][0] == '$' && programFileContents[i][1] == '0' && programBeginingWritten == 0)
-	   		{
-	   			blockNumber = findRealBlockByPLR(nextPLRBlockIndex++);
-	   			if (blockNumber == -1){
+			++i;
+		}
+		else if(rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == 'E' && rmSupervisorMemory[i][2] == 'N' && rmSupervisorMemory[i][3] == 'D')
+		{
+			return 0;
+		}
+/*		else if()
+		{
+
+		}*/
+		else
+		{
+		  	if (lineCount <= 9)
+			{
+				//printf("%d  %d", lineCount, blockNumber);
+				if (lineCount < 10 && rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == '0' && programBeginingWritten == 0)
+		   		{
+		   			blockNumber = findRealBlockByPLR(nextPLRBlockIndex++);
+		   			if (blockNumber == -1){
+						return -1;
+					}
+		   			lineCount = 0;
+		   			programBeginingWritten = 1;
+		   		}
+		   		for (j = 0; j < MEMORY_ARRAY_WIDTH; ++j)
+		   		{
+			    	rmMemory[lineCount + blockNumber * 10][j] = rmSupervisorMemory[i][j];
+			    	//printf("%c", rmMemory[lineCount + blockNumber * 10][j]);
+		   		}
+		   		++lineCount;
+		   		//printf("\n");
+		   	}
+	  		else
+	  		{
+	  			blockNumber = findRealBlockByPLR(nextPLRBlockIndex++);
+	  			if (blockNumber == -1){
 					return -1;
 				}
-	   			lineCount = 0;
-	   			programBeginingWritten = 1;
-	   		}
-	   		for (j = 0; j < MEMORY_ARRAY_WIDTH; ++j)
-	   		{
-		    	rmMemory[lineCount + blockNumber * 10][j] = programFileContents[i][j];
-		    	//printf("%c", rmMemory[lineCount + blockNumber * 10][j]);
-	   		}
-	   		++lineCount;
-	   		//printf("\n");
-	  	}
-	  	else
-  		{
-  			blockNumber = findRealBlockByPLR(nextPLRBlockIndex++);
-  			if (blockNumber == -1){
-				return -1;
-			}
-  			lineCount = 0;
+	  			lineCount = 0;
+	  		}
   		}
   	}
   	return 0;
@@ -201,7 +244,7 @@ int outputRealMachineMemoryToFile(char* fileName)
 	return 0;
 }
 /**
- * read the provided program file contents into array
+ * read the provided program file contents into temporary array
  * return:
  *		int  0 - if the reading was successful 
  *		and the program begins with "$BEG" and ends with "$END"
@@ -381,6 +424,7 @@ int findRealAddress(int x1, int x2)
 void detectCommand()
 {
 	char command[4];
+	int programNameEnd = 0;
 
 	while ( (command[0] != '$' || command[1] != 'E' || command[2] != 'N' || command[3] != 'D') )
 	{
@@ -411,7 +455,8 @@ void detectCommand()
 					else if (command[1] == '0' && command[3] == '0')
 					{
 						// put data to a different block told by command[2]
-						printf("Move to another block ($0x0) detected.\n");
+						printf("Move to another block ($0x0) detected. X is equal to %c\n", command[2]);
+						programNameEnd = 1;
 					}
 					else if (command[1] == 'E' && command[2] =='N' && command[3] == 'D')
 					{
@@ -427,9 +472,77 @@ void detectCommand()
 					{
 						printf("PD command detected.\n");
 					}
-					else
+					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
 					{
-						printf("Unknown symbol within program. Stopping!\n\n");
+						// TODO: deal with program name
+						printf("Program name part detected.\n");
+						programNameEnd = 1;
+					}
+					break;
+				case 'A':
+					if (command[1] == 'D' && isdigit(command[2]) && isdigit(command[3]))
+					{
+						printf("AD command detected.\n");
+					}
+					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
+					{
+						// TODO: deal with program name
+						printf("Program name part detected.\n");
+					}
+					break;
+				case 'L':
+					if (command[1] == 'R' && isdigit(command[2]) && isdigit(command[3]))
+					{
+						printf("LR command detected.\n");
+					}
+					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
+					{
+						// TODO: deal with program name
+						printf("Program name part detected.\n");
+					}
+					break;
+				case 'S':
+					if (command[1] == 'R' && isdigit(command[2]) && isdigit(command[3]))
+					{
+						printf("SR command detected.\n");
+					}
+					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
+					{
+						// TODO: deal with program name
+						printf("Program name part detected.\n");
+					}
+					break;
+				case 'C':
+					if (command[1] == 'R' && isdigit(command[2]) && isdigit(command[3]))
+					{
+						printf("CR command detected.\n");
+					}
+					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
+					{
+						// TODO: deal with program name
+						printf("Program name part detected.\n");
+					}
+					break;
+				case 'B':
+					if (command[1] == 't' && isdigit(command[2]) && isdigit(command[3]))
+					{
+						printf("BT command detected.\n");
+					}
+					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
+					{
+						// TODO: deal with program name
+						printf("Program name part detected.\n");
+					}
+					break;
+				case 'G':
+					if (command[1] == 'D' && isdigit(command[2]) && isdigit(command[3]))
+					{
+						printf("GD command detected.\n");
+					}
+					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
+					{
+						// TODO: deal with program name
+						printf("Program name part detected.\n");
 					}
 					break;
 				case 'H':
@@ -444,10 +557,14 @@ void detectCommand()
 						// TODO: set the limit of output rows
 						printf("Set the limit of output rows detected.\n");
 					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]))
+					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
 					{
 						// TODO: deal with program name
 						printf("Program name part detected.\n");
+					}
+					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 1)
+					{
+						printf("Output string detected.\n");
 					}
 					break;
 		}
@@ -652,6 +769,14 @@ int main()
 		printf("\nThere was a problem reading program file into temporary memory!\n");
 	}
 	printf("System Information:\n");
+	if (loadProgramIntoSupervisorMemory() == 0)
+	{
+		printf("\nProgram file loading into supervisor memory was successful!\n");
+	}
+	else
+	{
+		printf("\nThere was a problem loading program into supervisor memory!\n");
+	}
 	if (loadProgramIntoMemory() == 0)
 	{
 		printf("\nProgram file loading into real memory was successful!\n");
@@ -661,7 +786,7 @@ int main()
 		printf("\nThere was a problem loading program into real memory!\n");
 	}
 	showRegistryStatus();
-	detectCommand();
+	//detectCommand();
 	
 	if (outputRealMachineMemoryToFile(OUTPUT_FILE_NAME) == 0)
 	{
