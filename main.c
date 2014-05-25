@@ -117,6 +117,8 @@ int loadProgramIntoMemory()
 		{
 			printf("$0x0 block detected\n");
 			blockNumber = findRealBlockByPLR(rmSupervisorMemory[i][2] - '0');
+			programBeginingWritten = 1; 
+			lineCount = 0;
 		}
 		// otherwise - put to memory
 		else
@@ -656,6 +658,7 @@ int main()
 	else
 	{
 		printf("\nThere was a problem loading program into supervisor memory!\n");
+		return -1;
 	}
 	printf("===Program parsing info===\n");
 	if (loadProgramIntoMemory() == 0)
@@ -665,6 +668,7 @@ int main()
 	else
 	{
 		printf("\nThere was a problem loading program into real memory!\n");
+		return -1;
 	}
 	printf("===END===\n");
 	showRegistryStatus();
@@ -677,6 +681,7 @@ int main()
 	else
 	{
 		printf("There was a problem outputing the RM memory to file!\n");
+		return -1;
 	}
 	
 	//getchar();
