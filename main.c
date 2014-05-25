@@ -112,6 +112,12 @@ int loadProgramIntoMemory()
 		{
 			printf("Text line detected!\n");
 		}
+		// if $0x0 block detected, meaning - go to x block and put upcoming data there
+		else if(rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == '0' && isdigit(rmSupervisorMemory[i][2]) && rmSupervisorMemory[i][3] == '0' && rmSupervisorMemory[i][2] > 0)
+		{
+			printf("$0x0 block detected\n");
+			blockNumber = findRealBlockByPLR(rmSupervisorMemory[i][2] - '0');
+		}
 		// otherwise - put to memory
 		else
 		{
