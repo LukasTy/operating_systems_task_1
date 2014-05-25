@@ -110,22 +110,27 @@ int loadProgramIntoMemory()
 
 	for (i = 0; i < programLength; ++i)
 	{
+		// if $BEG block was detected
 		if (rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == 'B' && rmSupervisorMemory[i][2] == 'E' && rmSupervisorMemory[i][3] == 'G')
 		{
 			printf("$BEG detected!\n");
 		}
+		// if $END block was detected
 		else if(rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == 'E' && rmSupervisorMemory[i][2] == 'N' && rmSupervisorMemory[i][3] == 'D')
 		{
 			return 0;
 		}
+		// if 00x0 line detected, stating the max output line count
 		else if(isdigit(rmSupervisorMemory[i][0]) && isdigit(rmSupervisorMemory[i][1]) && isdigit(rmSupervisorMemory[i][2]) && isdigit(rmSupervisorMemory[i][3]) && rmSupervisorMemory[i][2] > 0)
 		{
 			printf("Set max output line count detected!\n");
 		}
-		else if(!isdigit(rmSupervisorMemory[i][0]) && !isdigit(rmSupervisorMemory[i][1]) && !isdigit(rmSupervisorMemory[i][2]) && !isdigit(rmSupervisorMemory[i][3]))
+		// if all four members within array were NOT numbers - letters
+		else if(!isdigit(rmSupervisorMemory[i][0]) && !isdigit(rmSupervisorMemory[i][1]) && !isdigit(rmSupervisorMemory[i][2]) && !isdigit(rmSupervisorMemory[i][3]) && programBeginingWritten == 0)
 		{
 			printf("Text line detected!\n");
 		}
+		// otherwise - put to memory
 		else
 		{
 		  	if (lineCount <= 9)
