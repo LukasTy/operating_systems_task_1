@@ -36,7 +36,7 @@ int  vm_IC = 0;
 bool vm_C = false;
 
 // RM registries
-char rm_R [4] = {0};
+char rm_R [4];
 int  rm_IC = 0;
 int  PLR  [4];
 int  CHST1, CHST2, CHST3;
@@ -106,7 +106,7 @@ int loadProgramIntoMemory()
 			return 0;
 		}
 		// if 00x0 line detected, stating the max output line count
-		else if(isdigit(rmSupervisorMemory[i][0]) && isdigit(rmSupervisorMemory[i][1]) && isdigit(rmSupervisorMemory[i][2]) && isdigit(rmSupervisorMemory[i][3]) && rmSupervisorMemory[i][2] > 0)
+		else if(isdigit(rmSupervisorMemory[i][0]) && isdigit(rmSupervisorMemory[i][1]) && isdigit(rmSupervisorMemory[i][2]) && isdigit(rmSupervisorMemory[i][3]) && rmSupervisorMemory[i][2] > '0' && programBeginingWritten == 0)
 		{
 			//printf("Set max output line count detected!\n");
 			maxOutputLines = (rmSupervisorMemory[i][0] - '0') * 1000 + (rmSupervisorMemory[i][1] - '0') * 100 + (rmSupervisorMemory[i][2] - '0') * 10 + (rmSupervisorMemory[i][3] - '0');
@@ -232,7 +232,7 @@ int outputRealMachineMemoryToFile(char* fileName)
 		fprintf(outputFile, "\n");
 	}
 	fclose(outputFile);
-	
+
 	return 0;
 }
 /**
@@ -248,13 +248,13 @@ int readProgramFile()
 	FILE *programFile = NULL;
 	char buffer;
 	j = 0, k = 0;
-	
+
 	while (asking == 1)
 	{
 		char programFileName[20];
 		printf("\nProvide the name of your program file to be run (upto 20 symbols): ");
 		scanf("%s", programFileName);
-		
+
 		programFile = fopen(programFileName, "r+");
 
 		if (programFile == NULL)
@@ -287,7 +287,7 @@ int readProgramFile()
 	}
 	fclose(programFile);
 	programLength = k;
-	
+
 	if (rmSupervisorMemory  [0][0] == '$' && 
 		rmSupervisorMemory  [0][1] == 'B' &&
 		rmSupervisorMemory  [0][2] == 'E' &&
@@ -304,7 +304,7 @@ int readProgramFile()
 	{
 		return -1;
 	}
-	
+
 }
 /**
  * Displays the contents of the current registries state 
@@ -417,6 +417,69 @@ void commandPD(int x1)
                 rmMemory[findRealAddress(x1, i)][2], rmMemory[findRealAddress(x1, i)][3]);
   	}
 }
+
+void commandAD(char x1, char x2)
+{
+	int suma = (vm_R[0] - '0') * 1000 +
+             (vm_R[1] - '0') * 100 +
+             (vm_R[2] - '0') * 10 +
+             (vm_R[3] - '0') +
+           	 (rmMemory[findRealAddress(x1 - '0', x2 - '0')][0] - '0') * 1000 +
+             (rmMemory[findRealAddress(x1 - '0', x2 - '0')][1] - '0') * 100 +
+             (rmMemory[findRealAddress(x1 - '0', x2 - '0')][2] - '0') * 10 +
+             (rmMemory[findRealAddress(x1 - '0', x2 - '0')][3] - '0');
+	  vm_R[3] = suma % 10 + '0';
+	  vm_R[2] = suma % 100 / 10 + '0';
+	  vm_R[1] = suma % 1000 / 100 + '0';
+	  vm_R[0] = suma % 10000 / 1000 + '0';
+}
+
+void commandLR(char x1, char x2)
+{
+	for (i = 0; i < 4; ++i)
+	{
+		rm_R[i] = rmMemory[findRealAddress(x1, x2)][i];
+	}
+}
+
+void commandSR(char x1, char x2)
+{
+	for (i = 0; i < 4; i++)
+	{
+		rmMemory[findRealAddress(x1, x2)][i] = rm_R[i];
+	}
+}
+
+void commandCR(char x1, char x2)
+{
+	if(rmMemory[findRealAddress(x1, x2)] == rm_R)
+	{
+		rm_C = true;
+	}
+	else rm_C = false;
+}
+
+void commandBT(char x1, char x2)
+{
+	if (rm_C)
+	{
+		rm_IC=(x1-'0')*10+x2-'0';
+	}
+}
+
+void commandGD(char x1)
+{
+	int sk;
+	for (i = 0; i < 2; ++i)
+	{
+		char x2 = i + '0';
+		scanf("%d", sk);
+		rmMemory[findRealAddress(x1, x2)][3] = sk % 10 + '0';
+		rmMemory[findRealAddress(x1, x2)][2] = sk / 10 % 10 + '0';
+		rmMemory[findRealAddress(x1, x2)][1] = sk / 100 % 10 + '0';
+		rmMemory[findRealAddress(x1, x2)][0] = sk / 1000 % 10 + '0';
+	}
+}
 /**
  * SORT OF WORKING.
  */
@@ -455,30 +518,36 @@ void detectCommand()
 					if (command[1] == 'D' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("AD command detected.\n");
+						commandAD(command[2], command[3]);
+						showRegistryStatus();
 					}
 					break;
 				case 'L':
 					if (command[1] == 'R' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("LR command detected.\n");
+						commandLR(command[2], command[3]);
 					}
 					break;
 				case 'S':
 					if (command[1] == 'R' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("SR command detected.\n");
+						commandSR(command[2], command[3]);
 					}
 					break;
 				case 'C':
 					if (command[1] == 'R' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("CR command detected.\n");
+						commandCR(command[2], command[3]);
 					}
 					break;
 				case 'B':
 					if (command[1] == 't' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("BT command detected.\n");
+						commandBT(command[2], command[3]);
 					}
 					break;
 				case 'G':
@@ -500,70 +569,6 @@ void detectCommand()
 }// end detectCommand()
 /*----------------------------------------------------------------------------------------------------*/
 
-void commandAD(char x1, char x2)
-{
-	int suma = (rm_R[0] - '0') * 1000 +
-             (rm_R[1] - '0') * 100 +
-             (rm_R[2] - '0') * 10 +
-             (rm_R[3] - '0') +
-           	 (rmMemory[findRealAddress(x1, x2)][0] - '0') * 1000 +
-             (rmMemory[findRealAddress(x1, x2)][1]  -'0') * 100 +
-             (rmMemory[findRealAddress(x1, x2)][2] - '0') * 10 +
-             (rmMemory[findRealAddress(x1, x2)][3] - '0');
-	  rm_R[3] = suma % 10 + '0';
-	  rm_R[2] = suma % 100 / 10 + '0';
-	  rm_R[1] = suma % 1000 / 100 + '0';
-	  rm_R[0] = suma % 10000 / 1000 + '0';
-}
-
-void commandLR(char x1, char x2)
-{
-	for (i = 0; i < 4; ++i)
-	{
-		rm_R[i] = rmMemory[findRealAddress(x1, x2)][i];
-	}
-}
-
-void commandSR(char x1, char x2)
-{
-	for (i = 0; i < 4; i++)
-	{
-		rmMemory[findRealAddress(x1, x2)][i] = rm_R[i];
-	}
-}
-
-void commandCR(char x1, char x2)
-{
-	if(rmMemory[findRealAddress(x1, x2)] == rm_R)
-	{
-		rm_C = true;
-	}
-	else rm_C = false;
-}
-
-void commandBT(char x1, char x2)
-{
-	if (rm_C)
-	{
-		rm_IC=(x1-'0')*10+x2-'0';
-	}
-}
-
-
-void commandGD(char x1)
-{
-	int sk;
-	for (i = 0; i < 2; ++i)
-	{
-		char x2 = i + '0';
-		scanf("%d", sk);
-		rmMemory[findRealAddress(x1, x2)][3] = sk % 10 + '0';
-		rmMemory[findRealAddress(x1, x2)][2] = sk / 10 % 10 + '0';
-		rmMemory[findRealAddress(x1, x2)][1] = sk / 100 % 10 + '0';
-		rmMemory[findRealAddress(x1, x2)][0] = sk / 1000 % 10 + '0';
-	}
-}
-
 void commandHALT()
 {
 	printf("HALT command executed. Virtual Machine work stopped!\n");
@@ -575,12 +580,12 @@ int main()
 	printf("* Welcome to Real Machine (RM) and Virtual Machine (VM) project!\n");
 	printf("* This is a program which simulates VM work on top of RM.\n");
 	printf("/***************************************************************/\n");
-	
+
 	printf("System Information:\n");
 
 	initiliazeMemory();
 	initializePageTable();
-	
+
 	if (readProgramFile() == 0)
 	{
 		printf("\nProgram file loading into supervisor memory was successful!\n");
@@ -601,7 +606,7 @@ int main()
 	}
 	showRegistryStatus();
 	detectCommand();
-	
+
 	if (outputRealMachineMemoryToFile(OUTPUT_FILE_NAME) == 0)
 	{
 		printf("Real machine memory was succesfully outputted to file!\n");
@@ -611,7 +616,7 @@ int main()
 		printf("There was a problem outputing the RM memory to file!\n");
 		return -1;
 	}
-	
+
 	//getchar();
 	return 0;
 }
