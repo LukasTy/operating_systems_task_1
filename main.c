@@ -395,19 +395,14 @@ int initializePageTable()
     }
 }
 /**
- * NOT SURE ABOUT THIS YET/ WORKING IN detectCommand()
+ * Returns the Real Address of a block given by x1 and x2
  */
 int findRealAddress(int x1, int x2)
 {
-	//printf("Parameters: %d%d were sent\n", x1, x2);
 	char digit1 = rmMemory[(PLR[2] * 10 + PLR[3]) * 10 + x1][0];
 	char digit2 = rmMemory[(PLR[2] * 10 + PLR[3]) * 10 + x1][1];
-	//printf("%c %c\n", digit1, digit2);
 	int result = ( (digit1 - '0') * 100 + 10 * (digit2 - '0') + x2 );
-	//printf("Result: %d\n", result);
 	return result;
-	/*return (rmMemory[10 * (10 * PLR[2] + PLR[3]) + x1][1]) +
-	    10 * (rmMemory[10 * (10 * PLR[2] + PLR[3]) + x1][0]);*/
 }
 void commandPD(int x1)
 {
@@ -436,35 +431,35 @@ void commandAD(char x1, char x2)
 
 void commandLR(char x1, char x2)
 {
-	for (i = 0; i < 4; ++i)
+	for (i = 0; i < MEMORY_ARRAY_WIDTH; ++i)
 	{
-		rm_R[i] = rmMemory[findRealAddress(x1, x2)][i];
+		vm_R[i] = rmMemory[findRealAddress(x1 - '0', x2 - '0')][i];
 	}
 }
 
 void commandSR(char x1, char x2)
 {
-	for (i = 0; i < 4; i++)
+	for (i = 0; i < MEMORY_ARRAY_WIDTH; i++)
 	{
-		rmMemory[findRealAddress(x1, x2)][i] = rm_R[i];
+		rmMemory[findRealAddress(x1 - '0', x2 - '0')][i] = vm_R[i];
 	}
 }
 
 void commandCR(char x1, char x2)
 {
-	if(rmMemory[findRealAddress(x1, x2)] == rm_R)
+	for (i = 0; i < MEMORY_ARRAY_WIDTH; ++i)
 	{
-		rm_C = true;
+		if(rmMemory[findRealAddress(x1 - '0', x2 - '0')][i] == vm_R[i])
+			vm_C = true;
+		else 
+			vm_C = false;
 	}
-	else rm_C = false;
 }
 
 void commandBT(char x1, char x2)
 {
-	if (rm_C)
-	{
-		rm_IC=(x1-'0')*10+x2-'0';
-	}
+	if (vm_C)
+		vm_IC = (x1 - '0') * 10 + x2 - '0';
 }
 
 void commandGD(char x1)
@@ -527,6 +522,7 @@ void detectCommand()
 					{
 						printf("LR command detected.\n");
 						commandLR(command[2], command[3]);
+						showRegistryStatus();
 					}
 					break;
 				case 'S':
@@ -541,13 +537,15 @@ void detectCommand()
 					{
 						printf("CR command detected.\n");
 						commandCR(command[2], command[3]);
+						showRegistryStatus();
 					}
 					break;
 				case 'B':
-					if (command[1] == 't' && isdigit(command[2]) && isdigit(command[3]))
+					if (command[1] == 'T' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("BT command detected.\n");
 						commandBT(command[2], command[3]);
+						showRegistryStatus();
 					}
 					break;
 				case 'G':
