@@ -464,16 +464,21 @@ void commandBT(char x1, char x2)
 
 void commandGD(char x1)
 {
-	int sk;
-	for (i = 0; i < 2; ++i)
+	char buffer[40] = {};
+	char input[10][4] = {};
+	scanf("Įveskite iki 40 ženklų: %s", buffer);
+
+	for (i = 0; i < 10; ++i)
 	{
-		char x2 = i + '0';
-		scanf("%d", sk);
-		rmMemory[findRealAddress(x1, x2)][3] = sk % 10 + '0';
-		rmMemory[findRealAddress(x1, x2)][2] = sk / 10 % 10 + '0';
-		rmMemory[findRealAddress(x1, x2)][1] = sk / 100 % 10 + '0';
-		rmMemory[findRealAddress(x1, x2)][0] = sk / 1000 % 10 + '0';
+		for (j = 0; j < MEMORY_ARRAY_WIDTH; ++j)
+		{
+			rmMemory[findRealAddress(x1 - '0', i)][j] = buffer[i + (4 * i + j)];
+		}
 	}
+}
+void commandHALT()
+{
+	printf("HALT command executed. Virtual Machine work stopped!\n");
 }
 /**
  * SORT OF WORKING.
@@ -552,6 +557,7 @@ void detectCommand()
 					if (command[1] == 'D' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("GD command detected.\n");
+						commandGD(command[2]);
 					}
 					break;
 				default:
@@ -565,12 +571,7 @@ void detectCommand()
 	}// end while 
 	printf("Program work done. HALT detected!\n");
 }// end detectCommand()
-/*----------------------------------------------------------------------------------------------------*/
 
-void commandHALT()
-{
-	printf("HALT command executed. Virtual Machine work stopped!\n");
-}
 /*------------------------------MAIN PROGRAM--------------------------------------*/
 int main()
 {	
