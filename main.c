@@ -98,7 +98,7 @@ int loadProgramIntoMemory()
 		// if $BEG block was detected
 		if (rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == 'B' && rmSupervisorMemory[i][2] == 'E' && rmSupervisorMemory[i][3] == 'G')
 		{
-			printf("$BEG detected!\n");
+			//printf("$BEG detected!\n");
 		}
 		// if $END block was detected
 		else if(rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == 'E' && rmSupervisorMemory[i][2] == 'N' && rmSupervisorMemory[i][3] == 'D')
@@ -108,18 +108,18 @@ int loadProgramIntoMemory()
 		// if 00x0 line detected, stating the max output line count
 		else if(isdigit(rmSupervisorMemory[i][0]) && isdigit(rmSupervisorMemory[i][1]) && isdigit(rmSupervisorMemory[i][2]) && isdigit(rmSupervisorMemory[i][3]) && rmSupervisorMemory[i][2] > 0)
 		{
-			printf("Set max output line count detected!\n");
+			//printf("Set max output line count detected!\n");
 			maxOutputLines = (rmSupervisorMemory[i][0] - '0') * 1000 + (rmSupervisorMemory[i][1] - '0') * 100 + (rmSupervisorMemory[i][2] - '0') * 10 + (rmSupervisorMemory[i][3] - '0');
 		}
 		// if all four members within array were NOT numbers - letters
 		else if(!isdigit(rmSupervisorMemory[i][0]) && !isdigit(rmSupervisorMemory[i][1]) && !isdigit(rmSupervisorMemory[i][2]) && !isdigit(rmSupervisorMemory[i][3]) && programBeginingWritten == 0)
 		{
-			printf("Program name part detected!\n");
+			//printf("Program name part detected!\n");
 		}
 		// if $0x0 block detected, meaning - go to x block and put upcoming data there
 		else if(rmSupervisorMemory[i][0] == '$' && rmSupervisorMemory[i][1] == '0' && isdigit(rmSupervisorMemory[i][2]) && rmSupervisorMemory[i][3] == '0' && rmSupervisorMemory[i][2] > 0)
 		{
-			printf("$0x0 block detected\n");
+			//printf("$0x0 block detected\n");
 			blockNumber = findRealBlockByPLR(rmSupervisorMemory[i][2] - '0');
 			programBeginingWritten = 1; 
 			lineCount = 0;
@@ -423,7 +423,6 @@ void commandPD(int x1)
 void detectCommand()
 {
 	char command[4];
-	int programNameEnd = 0;
 
 	while ( (command[0] != 'H' || command[1] != 'A' || command[2] != 'L' || command[3] != 'T') )
 	{
@@ -451,22 +450,11 @@ void detectCommand()
 						printf("PD command detected.\n");
 						commandPD(command[2] - '0');
 					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
-					{
-						// TODO: deal with program name
-						printf("Program name part detected.\n");
-						programNameEnd = 1;
-					}
 					break;
 				case 'A':
 					if (command[1] == 'D' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("AD command detected.\n");
-					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
-					{
-						// TODO: deal with program name
-						printf("Program name part detected.\n");
 					}
 					break;
 				case 'L':
@@ -474,21 +462,11 @@ void detectCommand()
 					{
 						printf("LR command detected.\n");
 					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
-					{
-						// TODO: deal with program name
-						printf("Program name part detected.\n");
-					}
 					break;
 				case 'S':
 					if (command[1] == 'R' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("SR command detected.\n");
-					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
-					{
-						// TODO: deal with program name
-						printf("Program name part detected.\n");
 					}
 					break;
 				case 'C':
@@ -496,21 +474,11 @@ void detectCommand()
 					{
 						printf("CR command detected.\n");
 					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
-					{
-						// TODO: deal with program name
-						printf("Program name part detected.\n");
-					}
 					break;
 				case 'B':
 					if (command[1] == 't' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("BT command detected.\n");
-					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
-					{
-						// TODO: deal with program name
-						printf("Program name part detected.\n");
 					}
 					break;
 				case 'G':
@@ -518,14 +486,9 @@ void detectCommand()
 					{
 						printf("GD command detected.\n");
 					}
-					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
-					{
-						// TODO: deal with program name
-						printf("Program name part detected.\n");
-					}
 					break;
 				default:
-					if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 1)
+					if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]))
 					{
 						printf("Output string detected.\n");
 					}
@@ -627,7 +590,6 @@ int main()
 		printf("\nThere was a problem loading program into supervisor memory!\n");
 		return -1;
 	}
-	printf("===Program parsing info===\n");
 	if (loadProgramIntoMemory() == 0)
 	{
 		printf("\nProgram file loading into real memory was successful!\n");
@@ -637,7 +599,6 @@ int main()
 		printf("\nThere was a problem loading program into real memory!\n");
 		return -1;
 	}
-	printf("===END===\n");
 	showRegistryStatus();
 	detectCommand();
 	
