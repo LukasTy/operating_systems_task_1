@@ -409,6 +409,14 @@ int findRealAddress(int x1, int x2)
 	/*return (rmMemory[10 * (10 * PLR[2] + PLR[3]) + x1][1]) +
 	    10 * (rmMemory[10 * (10 * PLR[2] + PLR[3]) + x1][0]);*/
 }
+void commandPD(int x1)
+{
+	for (i = 0; i < 10; ++i)
+	{
+    	printf("rmMemory value: %c%c%c%c\n", rmMemory[findRealAddress(x1, i)][0], rmMemory[findRealAddress(x1, i)][1], 
+                rmMemory[findRealAddress(x1, i)][2], rmMemory[findRealAddress(x1, i)][3]);
+  	}
+}
 /**
  * SORT OF WORKING.
  */
@@ -441,6 +449,7 @@ void detectCommand()
 					if (command[1] == 'D' && isdigit(command[2]) && isdigit(command[3]))
 					{
 						printf("PD command detected.\n");
+						commandPD(command[2] - '0');
 					}
 					else if (!isdigit(command[0]) && !isdigit(command[1]) && !isdigit(command[2]) && !isdigit(command[3]) && programNameEnd == 0)
 					{
@@ -590,16 +599,6 @@ void commandGD(char x1)
 		rmMemory[findRealAddress(x1, x2)][1] = sk / 100 % 10 + '0';
 		rmMemory[findRealAddress(x1, x2)][0] = sk / 1000 % 10 + '0';
 	}
-}
-
-void commandPD(char x1)
-{
-  for (i = 0; i < 10; i++)
-  {
-    char x2 = i + '0';
-    printf("IC: %d\n%d\n%d\n%d", rmMemory[findRealAddress(x1, x2)][0], rmMemory[findRealAddress(x1, x2)][1], 
-                rmMemory[findRealAddress(x1, x2)][2], rmMemory[findRealAddress(x1, x2)][3]);
-  }
 }
 
 void commandHALT()
